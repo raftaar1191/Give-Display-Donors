@@ -9,36 +9,29 @@
 
 // Exit if accessed directly
 if ( ! defined( 'ABSPATH' ) ) {
-    exit;
+	exit;
 }
 
-add_shortcode( 'display_donors', 'givedd_recent_donors_function' );
+function givedd_display_nonanonymous_donors( $atts, $content ) {
+	$atts = shortcode_atts( array(
+		'forms' => array()
+	), $atts );
 
-function give_display_donors_function()
-{
+	$form_ids  = ( ! empty( $atts['forms'] ) ) ? explode( ',', $atts['forms'] ) : array();
+	$donor_ids = givedd_get_nonanonymous_donors( $form_ids );
 
-    //Get the latest 100 Give Donors
-    $args = array(
-        'number' => 100,
-    );
+	printf( '<div class="give-grid-donor-wrap">' );
 
-    $donors = Give()->customers->get_customers($args);
+	foreach ( $donor_ids as $donor_id ) {
+		$donor      = new Give_Donor( $donor_id );
+		$first_name = $donor->get_first_name();
+		$last_name  = $donor->get_last_name();
+		$email      = $donor->email;
 
-    foreach ( $donors as $donor ) {
+		include GIVEDD_DIR . '/templates/render-donor-grid-item.php';
+	}
 
-        $output = $donor->name . ", ";
-        // First and Last Name
-        $name = $donor->name;
-        //Split up the names
-        $separate = explode(" ", $name);
-        //find the surname
-        $last = array_pop($separate);
-        //Shorten up the name so it's Jason T.  instead of Jason Tucker
-        $shortenedname = implode(' ', $separate) . " " . $last[0] . ".";
-        //Display the Jason T. and include a , after it.
-        $output .= $shortenedname . ", ";
-    }
-
-    $output .= " and many more.";
-    return $output;
+	printf( '</div>' );
 }
+
+add_shortcode( 'display_donors', 'givedd_display_nonanonymous_donors' );
